@@ -1,6 +1,6 @@
 import tkinter as tk
-import tkinter.filedialog as filedialog
 from tkinter import messagebox, ttk
+import math
 import re
 import datetime
 import pytz
@@ -290,37 +290,83 @@ class Controller:
 
         if unfinished_transactions:
             num_transactions = len(unfinished_transactions)
-            window_height = min(400 + num_transactions * 60, self.view.root.winfo_screenheight() - 100)
-            unfinished_window.geometry(f"400x{window_height}")
+            items_per_page = 3  # Define the number of transactions to display per page
+            num_pages = math.ceil(num_transactions / items_per_page)
+
+            # Determine the current page based on the transactions length and items per page
+            current_page = 1
+
+            def show_page(page):
+                # Clear the previous page's contents
+                for widget in transaction_frame.winfo_children():
+                    widget.destroy()
+
+                start_index = (page - 1) * items_per_page
+                end_index = start_index + items_per_page
+
+                # Display the transactions for the current page
+                for i, transaction in enumerate(unfinished_transactions[start_index:end_index]):
+                    transaction_text = f"Nama: {transaction['nama_pembeli']}\n" \
+                                        f"Alamat: {transaction['alamat_pembeli']}\n" \
+                                        f"No. Telp: {transaction['no_telp_pembeli']}\n" \
+                                        f"Status: {transaction['status']}\n"
+
+                    transaction_label = tk.Label(transaction_frame, text=transaction_text)
+                    transaction_label.pack()
+
+                    continue_btn = tk.Button(
+                        transaction_frame,
+                        text="Lanjutkan",
+                        command=lambda transaction=transaction: (self.continue_transaction(transaction['id']), unfinished_window.destroy()),
+                        bg="#1976d2",
+                        fg="white",
+                        font=("Helvetica", 10, "bold")
+                    )
+                    continue_btn.pack()
+
+                    if i < items_per_page - 1:
+                        separator = ttk.Separator(transaction_frame, orient='horizontal')
+                        separator.pack(fill='x', padx=10, pady=10)
+
+            def go_to_previous_page():
+                nonlocal current_page
+                if current_page > 1:
+                    current_page -= 1
+                    show_page(current_page)
+
+            def go_to_next_page():
+                nonlocal current_page
+                if current_page < num_pages:
+                    current_page += 1
+                    show_page(current_page)
+
             unfinished_label = tk.Label(unfinished_window, text="Transaksi Belum Selesai", font=("Helvetica", 12, "bold"))
             unfinished_label.pack()
 
-            for i, transaction in enumerate(unfinished_transactions):
-                transaction_text = f"Nama: {transaction['nama_pembeli']}\n" \
-                                f"Alamat: {transaction['alamat_pembeli']}\n" \
-                                f"No. Telp: {transaction['no_telp_pembeli']}\n" \
-                                f"Status: {transaction['status']}\n"
+            transaction_frame = tk.Frame(unfinished_window)
+            transaction_frame.pack(pady=10)
 
-                transaction_frame = tk.Frame(unfinished_window)
-                transaction_frame.pack(pady=10)
+            previous_btn = tk.Button(
+                unfinished_window,
+                text="Previous",
+                command=go_to_previous_page,
+                bg="#1976d2",
+                fg="white",
+                font=("Helvetica", 10, "bold")
+            )
+            previous_btn.pack(side="left")
 
-                transaction_label = tk.Label(transaction_frame, text=transaction_text)
-                transaction_label.pack()
+            next_btn = tk.Button(
+                unfinished_window,
+                text="Next",
+                command=go_to_next_page,
+                bg="#1976d2",
+                fg="white",
+                font=("Helvetica", 10, "bold")
+            )
+            next_btn.pack(side="right")
 
-                continue_btn = tk.Button(
-                    transaction_frame,
-                    text="Lanjutkan",
-                    command=lambda transaction=transaction: (self.continue_transaction(transaction['id']), unfinished_window.destroy()),
-                    bg="#1976d2",
-                    fg="white",
-                    font=("Helvetica", 10, "bold")
-                )
-                continue_btn.pack()
-
-                if i < len(unfinished_transactions) - 1:
-                    separator = ttk.Separator(unfinished_window, orient='horizontal')
-                    separator.pack(fill='x', padx=10, pady=10)
-
+            show_page(current_page)
         else:
             unfinished_window.geometry("400x200")
             no_transactions_label = tk.Label(unfinished_window, text="Tidak ada transaksi yang belum selesai.", font=("Helvetica", 10))
