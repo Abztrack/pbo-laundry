@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.filedialog as filedialog
 from tkinter import messagebox, ttk
 import re
 import datetime
@@ -263,7 +264,22 @@ class Controller:
         }
         transaction_ref = self.model.db.collection('transactions').document(transaction_id)
         transaction_ref.update(service_data)
-        messagebox.showinfo("Berhasil", "Jasa telah dikonfirmasi.")
+        # messagebox.showinfo("Berhasil", "Jasa telah dikonfirmasi.")
+        # Generate payment receipt
+        receipt_text = f"Jasa: {service}\n\n" \
+                       f"Harga: Rp{price}\n\n" \
+                       f"Lama Pengerjaan: {time} Jam\n\n" \
+                       f"Berat: {weight} kg\n\n" \
+                       f"Total Harga: Rp{total_price}"
+
+        # Save payment receipt as "receipt.txt"
+        receipt_file_name = "receipt.txt"
+        with open(receipt_file_name, "w") as receipt_file:
+            receipt_file.write(receipt_text)
+
+        # Show payment receipt using messagebox
+        messagebox.showinfo("Payment Receipt", receipt_text)
+        messagebox.showinfo("Berhasil", "Jasa telah masuk ke dalam database. Struk pembayaran telah disimpan sebagai receipt.txt.")
         service_window.destroy()
 
     def display_unfinished_transactions(self):
