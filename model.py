@@ -56,11 +56,11 @@ class Model:
 class Filter(Model):
     
     def filter_nomor(self, no_telp):
-        pattern = r'^0[0-9]{11}$'
+        pattern = r'^0[0-9]{10,12}$'
         if re.match(pattern, no_telp):
             return no_telp
         else:
-            raise ValueError("Format nomor tidak sesuai. Pastikan nomor 11 digit dan berawal dari angka '0'.")
+            raise ValueError("Format nomor tidak sesuai. Pastikan nomor diawali angka '0' dan 10-12 digit angka setelahnya.")
     
     def read_date_format(self, timestamp_str):
         timestamp = datetime.datetime.strptime(str(timestamp_str), "%Y-%m-%d %H:%M:%S.%f%z")
@@ -76,7 +76,7 @@ class Services(Model):
         services = []
         for service in query:
             service_dict = service.to_dict()
-            service_dict['id'] = service.id  # Include the 'id' field in the dictionary
+            service_dict['id'] = service.id  
             services.append(service_dict)
         return services
     
@@ -110,7 +110,6 @@ class Transaction(Model):
         for transaction in latest_transactions:
             return transaction.id
         
-        # If no transactions are found, create a new one and return its ID
         transaction_id = self.generate_transaction_id()
         transaction_ref = self.get_transaction_ref().document(transaction_id)
         transaction_data = {'id': transaction_id, 'timestamp': datetime.now()}
@@ -123,7 +122,7 @@ class Transaction(Model):
         unfinished_transactions = []
         for transaction in query:
             transaction_dict = transaction.to_dict()
-            transaction_dict['id'] = transaction.id  # Include the 'id' field in the dictionary
+            transaction_dict['id'] = transaction.id  
             unfinished_transactions.append(transaction_dict)
         return unfinished_transactions
     

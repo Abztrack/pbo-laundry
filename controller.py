@@ -12,7 +12,7 @@ timezone = pytz.timezone('Asia/Jakarta')
 class Controller:
     def __init__(self, root):
         self.model = Model()
-        self.view = View(root, self)  # Pass the controller instance
+        self.view = View(root, self)  
 
         self.view.add_transaction_btn.configure(command=self.input_user)
         self.view.unfinished_transactions_btn.configure(command=self.display_unfinished_transactions)
@@ -54,6 +54,10 @@ class Controller:
         add_transaction_btn.pack(pady=10)
 
     def add_transaction(self, name, address, phone, input_window):
+        if not name or not address:
+            messagebox.showerror("Error", "Nama dan alamat harus diisi.")
+            return
+        
         try:
             phone = self.model.filter_nomor(phone)
             data = {
@@ -64,8 +68,8 @@ class Controller:
             }
             transaction_id = self.model.add_transaction(data)
             messagebox.showinfo("Berhasil", "Data telah ditambahkan.")
-            input_window.destroy()  # Close the input window after adding the transaction
-            self.choose_service(transaction_id)  # Open the service selection menu
+            input_window.destroy()  
+            self.choose_service(transaction_id)  
         except ValueError as e:
             messagebox.showerror("Error", str(e))
 
@@ -83,7 +87,7 @@ class Controller:
         service_radio_frame = tk.Frame(service_window)
         service_radio_frame.pack(pady=10)
 
-        services = self.model.get_services()  # Fetch services from the Firestore database
+        services = self.model.get_services()  
 
         for service in services:
             service_radio = tk.Radiobutton(
@@ -113,11 +117,11 @@ class Controller:
 
     def confirm_service(self, transaction_id, service, weight, service_window):
         if service == "Cuci":
-            service_id = "J01"  # Set the service ID for "Cuci"
+            service_id = "J01"  
         elif service == "Setrika":
-            service_id = "J02"  # Set the service ID for "Setrika"
+            service_id = "J02"  
         elif service == "Cuci & Setrika":
-            service_id = "J03"  # Set the service ID for "Cuci & Setrika"
+            service_id = "J03"  
         else:
             messagebox.showerror("Error", "Kamu belum memilih jasa.")
             return
@@ -142,9 +146,9 @@ class Controller:
 
         service_data = {
             "service": service,
-            "service_id": service_id,  # Add the service ID to the service data
-            "weight": weight,  # Add the weight to the service data
-            "total_price": total_price,  # Add the total price to the service data
+            "service_id": service_id,  
+            "weight": weight,  
+            "total_price": total_price,  
             "estimated_time": time,
             "status": "finished",
             "tgl_masuk": entry_date,
@@ -154,8 +158,8 @@ class Controller:
         transaction_ref.update(service_data)
 
         # messagebox.showinfo("Berhasil", "Jasa telah dikonfirmasi.")
-        # Generate payment receipt
-
+        
+        # Cetak struk pembayaran
         transaction_doc = transaction_ref.get().to_dict()
 
         read_entry_date = self.model.read_date_format(entry_date)
@@ -174,12 +178,10 @@ class Controller:
                        f"------------------------------------------------------------------\n\n" \
                        f"Total Harga : Rp{total_price}"
 
-        # Save payment receipt as "receipt.txt"
         receipt_file_name = "receipt.txt"
         with open(receipt_file_name, "w") as receipt_file:
             receipt_file.write(receipt_text)
 
-        # Show payment receipt using messagebox
         messagebox.showinfo("Payment Receipt", receipt_text)
         messagebox.showinfo("Berhasil", "Jasa telah masuk ke dalam database. Struk pembayaran telah disimpan sebagai receipt.txt.")
         service_window.destroy()
@@ -192,21 +194,18 @@ class Controller:
 
         if unfinished_transactions:
             num_transactions = len(unfinished_transactions)
-            items_per_page = 3  # Define the number of transactions to display per page
+            items_per_page = 3  
             num_pages = math.ceil(num_transactions / items_per_page)
 
-            # Determine the current page based on the transactions length and items per page
             current_page = 1
 
             def show_page(page):
-                # Clear the previous page's contents
                 for widget in transaction_frame.winfo_children():
                     widget.destroy()
 
                 start_index = (page - 1) * items_per_page
                 end_index = start_index + items_per_page
 
-                # Display the transactions for the current page
                 for i, transaction in enumerate(unfinished_transactions[start_index:end_index]):
                     transaction_text = f"Nama: {transaction['nama_pembeli']}\n" \
                                         f"Alamat: {transaction['alamat_pembeli']}\n" \
@@ -280,7 +279,7 @@ class Controller:
         transaction_data = transaction_ref.get().to_dict()
 
         if transaction_data['status'] == 'unfinished':
-            self.choose_service(transaction_id)  # Open the service selection menu
+            self.choose_service(transaction_id)  
         else:
             messagebox.showerror("Error", "Transaksi ini sedang berjalan atau sudah selesai.")
 
